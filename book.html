@@ -144,6 +144,7 @@
         <input type="text" id="whyWhy" placeholder="Why Why Analysis" />
         <button type="submit">Save Entry</button>
         <button type="button" onclick="exportToExcel()">Export to Excel</button>
+        <button type="button" onclick="clearAllData()" style="background-color: #dc3545;">Clear All Data</button>
       </form>
 
       <table id="dataTable">
@@ -240,6 +241,14 @@
   const deleteEntry = index => {
     dataEntries.splice(index, 1);
     renderTable();
+  };
+
+  const clearAllData = () => {
+    if (confirm("Are you sure you want to delete all entries? This action cannot be undone.")) {
+      dataEntries = [];
+      localStorage.removeItem("dataEntries");
+      renderTable();
+    }
   };
 
   const exportToExcel = () => {
