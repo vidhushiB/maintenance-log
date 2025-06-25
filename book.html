@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Maintenance Daily Log Sheet</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(-45deg, #e3f2fd, #90caf9, #e3f2fd, #bbdefb);
+      --glass: rgba(255, 255, 255, 0.3);
+      --blur: blur(18px);
+      --primary: #1e3a8a;
+      --accent: #0ea5e9;
+      --radius: 16px;
+      --padding: 12px;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      --font: 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg-gradient);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+    .container {
+      max-width: 1500px;
+      margin: 40px auto;
+      padding: 20px;
+      background: var(--glass);
+      border-radius: var(--radius);
+      backdrop-filter: var(--blur);
+      box-shadow: var(--shadow);
+    }
+    h2 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+    input, select, button {
+      padding: var(--padding);
+      border-radius: var(--radius);
+      border: none;
+      outline: none;
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: inset 1px 1px 3px #ccc;
+    }
+    button {
+      background-color: var(--primary);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    button:hover { background-color: var(--accent); }
+    .time-wrapper { position: relative; }
+    .time-wrapper input { padding-top: 20px; }
+    .time-wrapper label {
+      position: absolute;
+      top: 6px;
+      left: 10px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: var(--shadow);
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      text-align: center;
+    }
+    th {
+      background-color: #1e40af;
+      color: white;
+    }
+    td button {
+      padding: 5px 10px;
+      margin: 2px;
+      background: var(--accent);
+      color: white;
+      border-radius: 6px;
+    }
+    td button:hover { background-color: #0369a1; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" id="entry-tab" data-bs-toggle="pill" data-bs-target="#pills-entry" type="button">Data Entry</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" id="graph-tab" data-bs-toggle="pill" data-bs-target="#pills-graph" type="button">Graph</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="pills-entry">
+      <h2>Data Entry Log</h2>
+      <form id="entryForm">
+        <input type="date" id="dateShift" required />
+        <select id="shift">
+          <option value="">Select Shift</option><option>A</option><option>B</option><option>C</option>
+        </select>
+        <input type="text" id="shiftTM" placeholder="Shift TM" />
+        <select id="workCentre">
+          <option value="">Work Centre</option>
+          <option>LAU2</option><option>LAUT</option><option>LFNC</option><option>LMF1</option>
+          <option>LPP1</option><option>LPP2</option><option>LPVB</option><option>LSPB</option>
+        </select>
+        <input type="text" id="equipment" placeholder="Equipment" />
+        <input type="text" id="typeOfWork" placeholder="Type of Work" />
+        <div class="time-wrapper">
+          <input type="time" id="minutesFrom" required />
+          <label for="minutesFrom">From</label>
+        </div>
+        <div class="time-wrapper">
+          <input type="time" id="minutesTo" required />
+          <label for="minutesTo">To</label>
+        </div>
+        <input type="text" id="natureOfProblem" placeholder="Nature of Problem" />
+        <input type="text" id="correctionAction" placeholder="Correction Action" />
+        <input type="text" id="preventiveAction" placeholder="Preventive Action" />
+        <input type="text" id="whyWhy" placeholder="Why Why Analysis" />
+        <button type="submit">Save Entry</button>
+        <button type="button" onclick="exportToExcel()">Export to Excel</button>
+        <button type="button" onclick="clearAllData()" style="background-color: #dc3545;">Clear All Data</button>
+      </form>
+
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>S.No</th><th>Date/Shift</th><th>Shift</th><th>Shift TM</th><th>Work Centre</th><th>Equipment</th>
+            <th>Type of Work</th><th>From</th><th>To</th><th>Hours</th><th>Nature</th>
+            <th>Correction</th><th>Preventive</th><th>Why Why</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="tab-pane fade" id="pills-graph">
+      <h2>Graph View</h2>
+      <select class="form-select mb-3" id="graphType" onchange="generateGraph()">
+        <option value="">-- Select Graph Type --</option>
+        <option value="date">Date vs Hours</option>
+        <option value="shift">Shift vs Hours</option>
+        <option value="workCentre">WorkCentre vs Hours</option>
+      </select>
+      <canvas id="chartCanvas" height="100"></canvas>
+      <div class="text-center mt-3">
+        <button class="btn btn-primary" onclick="downloadGraph()">Download Graph</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let dataEntries = JSON.parse(localStorage.getItem("dataEntries") || "[]");
+  let editIndex = -1;
+  const form = document.getElementById("entryForm");
+  const tableBody = document.querySelector("#dataTable tbody");
+
+  const renderTable = () => {
+    tableBody.innerHTML = "";
+    dataEntries.forEach((entry, index) => {
+      const row = `<tr>
+        <td>${index + 1}</td><td>${entry.dateShift}</td><td>${entry.shift}</td><td>${entry.shiftTM}</td><td>${entry.workCentre}</td>
+        <td>${entry.equipment}</td><td>${entry.typeOfWork}</td><td>${entry.minutesFrom}</td>
+        <td>${entry.minutesTo}</td><td>${entry.hours}</td><td>${entry.natureOfProblem}</td>
+        <td>${entry.correctionAction}</td><td>${entry.preventiveAction}</td><td>${entry.whyWhy}</td>
+        <td><button onclick="editEntry(${index})">Edit</button><button onclick="deleteEntry(${index})">Delete</button></td>
+      </tr>`;
+      tableBody.innerHTML += row;
+    });
+    localStorage.setItem("dataEntries", JSON.stringify(dataEntries));
+  };
+
+  const calculateHours = (from, to) => {
+    const start = new Date(`1970-01-01T${from}`);
+    const end = new Date(`1970-01-01T${to}`);
+    return ((end - start) / (1000 * 60 * 60)).toFixed(2);
+  };
+
+  form.onsubmit = e => {
+    e.preventDefault();
+    const entry = {
+      dateShift: form.dateShift.value,
+      shift: form.shift.value,
+      shiftTM: form.shiftTM.value,
+      workCentre: form.workCentre.value,
+      equipment: form.equipment.value,
+      typeOfWork: form.typeOfWork.value,
+      minutesFrom: form.minutesFrom.value,
+      minutesTo: form.minutesTo.value,
+      hours: calculateHours(form.minutesFrom.value, form.minutesTo.value),
+      natureOfProblem: form.natureOfProblem.value,
+      correctionAction: form.correctionAction.value,
+      preventiveAction: form.preventiveAction.value,
+      whyWhy: form.whyWhy.value
+    };
+    if (editIndex > -1) {
+      dataEntries[editIndex] = entry;
+      editIndex = -1;
+    } else {
+      dataEntries.push(entry);
+    }
+    form.reset();
+    renderTable();
+  };
+
+  const editEntry = index => {
+    const entry = dataEntries[index];
+    for (let key in entry) {
+      if (form[key]) form[key].value = entry[key];
+    }
+    editIndex = index;
+  };
+
+  const deleteEntry = index => {
+    dataEntries.splice(index, 1);
+    renderTable();
+  };
+
+  const clearAllData = () => {
+    if (confirm("Are you sure you want to delete all entries? This action cannot be undone.")) {
+      dataEntries = [];
+      localStorage.removeItem("dataEntries");
+      renderTable();
+    }
+  };
+
+  const exportToExcel = () => {
+    const headers = [
+      "S.NO", "DATE/SHIFT", "SHIFT", "SHIFT TM", "WORK CENTRE", "EQUIPMENT", "TYPE OF WORK",
+      "FROM", "TO", "HOURS", "NATURE", "CORRECTION", "PREVENTIVE", "WHY WHY"
+    ];
+    const rows = dataEntries.map((entry, i) => [
+      i + 1, entry.dateShift, entry.shift, entry.shiftTM, entry.workCentre, entry.equipment,
+      entry.typeOfWork, entry.minutesFrom, entry.minutesTo, entry.hours,
+      entry.natureOfProblem, entry.correctionAction, entry.preventiveAction, entry.whyWhy
+    ]);
+    const data = [["MAINTENANCE DAILY LOG SHEET"], [], headers, ...rows];
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
+    ws["A1"].s = {
+      font: { name: "Segoe UI", sz: 26, bold: true },
+      alignment: { horizontal: "center", vertical: "center" }
+    };
+    headers.forEach((_, i) => {
+      const cell = XLSX.utils.encode_cell({ r: 2, c: i });
+      if (ws[cell]) {
+        ws[cell].s = {
+          font: { name: "Segoe UI", sz: 16, bold: true, color: { rgb: "000000" } },
+          alignment: { horizontal: "center", vertical: "center" }
+        };
+      }
+    });
+    rows.forEach((row, i) => {
+      row.forEach((_, j) => {
+        const cell = XLSX.utils.encode_cell({ r: i + 3, c: j });
+        if (ws[cell]) {
+          ws[cell].s = {
+            font: { name: "Segoe UI", sz: 12 },
+            alignment: { horizontal: "center", vertical: "center" }
+          };
+        }
+      });
+    });
+    ws['!cols'] = headers.map(h => ({ wch: h.length + 10 }));
+    ws['!rows'] = [];
+    ws['!rows'][0] = { hpt: 136.8 };
+    ws['!rows'][2] = { hpt: 31.8 };
+    for (let i = 3; i < rows.length + 3; i++) {
+      ws['!rows'][i] = { hpt: 31.8 };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Maintenance Log");
+    XLSX.writeFile(wb, "MAINTENANCE_DAILY_LOG.xlsx");
+  };
+
+  const generateGraph = () => {
+    const type = document.getElementById("graphType").value;
+    if (!type) return;
+    const ctx = document.getElementById("chartCanvas").getContext("2d");
+    if (window.chart) window.chart.destroy();
+
+    const labels = [];
+    const hoursMap = {};
+    dataEntries.forEach(entry => {
+      const key = type === "date" ? entry.dateShift :
+                  type === "shift" ? entry.shift :
+                  entry.workCentre;
+      hoursMap[key] = (hoursMap[key] || 0) + parseFloat(entry.hours);
+    });
+
+    for (let key in hoursMap) labels.push(key);
+
+    window.chart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Total Hours",
+          data: labels.map(k => hoursMap[k]),
+          backgroundColor: "#0ea5e9"
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true },
+          title: { display: true, text: `Graph: ${type.toUpperCase()} vs HOURS` }
+        }
+      }
+    });
+  };
+
+  const downloadGraph = () => {
+    if (!window.chart) {
+      alert("Please generate the graph first.");
+      return;
+    }
+    const link = document.createElement("a");
+    link.href = window.chart.toBase64Image();
+    link.download = "graph.png";
+    link.click();
+  };
+
+  renderTable();
+</script>
+</body>
+</html>
